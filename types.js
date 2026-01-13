@@ -1,13 +1,19 @@
-// 1. Interfaces are removed entirely because JavaScript 
-// does not support them. They are only for development-time checks.
-
-// 2. Enums are converted to a standard JavaScript object.
-// We use 'export const' so other files can import it.
-export const AppState = {
-  FORM: 'FORM',
-  INITIALIZING: 'INITIALIZING',
-  RESPONSE: 'RESPONSE'
-};
-
-// Optional: prevent the object from being changed
-Object.freeze(AppState);
+export interface CollaborationRequest {
+fullName: string;
+email: string;
+brief: string;
+}
+export interface CreativeDirection {
+visionStatement: string;
+moodDescription: string;
+pillars: {
+title: string;
+description: string;
+}[];
+suggestedAesthetics: string[];
+}
+export enum AppState {
+FORM = 'FORM',
+INITIALIZING = 'INITIALIZING',
+RESPONSE = 'RESPONSE'
+}
