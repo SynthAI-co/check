@@ -2,39 +2,31 @@ import React, { useEffect, useState } from 'react';
 import { createRoot } from 'react-dom/client';
 import { GoogleGenerativeAI } from '@google/genai';
 
-// Vercel will inject this value from your Project Settings
+// In Vercel, use import.meta.env for browser-side variables
 const API_KEY = import.meta.env?.VITE_GEMINI_API_KEY || ""; 
 const genAI = new GoogleGenerativeAI(API_KEY);
 
 function App() {
-  const [status, setStatus] = useState("Initializing AI...");
+  const [msg, setMsg] = useState("Checking AI...");
 
   useEffect(() => {
-    async function testAI() {
-      if (!API_KEY) {
-        setStatus("Error: API Key missing in Vercel settings.");
-        return;
-      }
+    async function init() {
       try {
         const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
-        const result = await model.generateContent("Hello! Confirming system start.");
-        const response = await result.response;
-        console.log("AI Response:", response.text());
-        setStatus("AI Online: System Ready.");
-      } catch (error) {
-        console.error("AI Error:", error);
-        setStatus("AI Initialization Failed. Check Console.");
+        const res = await model.generateContent("Hello!");
+        setMsg("AI Response: " + (await res.response).text());
+      } catch (err) {
+        setMsg("Error: " + err.message);
       }
     }
-    testAI();
+    if (API_KEY) init();
+    else setMsg("API Key not found in Vercel settings.");
   }, []);
 
   return (
-    <div className="flex items-center justify-center min-h-screen text-white">
-      <div className="p-8 border border-blue-500 rounded-lg bg-gray-900 shadow-2xl">
-        <h1 className="text-3xl font-extrabold text-blue-400 mb-4">Omni-X</h1>
-        <p className="text-lg text-gray-400">Status: <span className="text-green-400">{status}</span></p>
-      </div>
+    <div className="p-10 bg-black min-h-screen text-blue-400">
+      <h1 className="text-3xl font-bold">Omni-X</h1>
+      <p className="mt-4">{msg}</p>
     </div>
   );
 }
