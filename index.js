@@ -1,56 +1,56 @@
 import React, { useState } from 'react';
 import { createRoot } from 'react-dom/client';
 
-// Use the key you set in Vercel
+// 1. No @google/genai import here! 
+// We use the built-in 'fetch' instead.
+
 const API_KEY = import.meta.env?.VITE_GEMINI_API_KEY || "";
 
 function App() {
-  const [response, setResponse] = useState("System Standby");
+  const [response, setResponse] = useState("System Ready");
   const [loading, setLoading] = useState(false);
 
   const runAI = async () => {
     if (!API_KEY) {
-      setResponse("Error: No API Key found in Vercel settings.");
+      setResponse("Error: API Key missing in Vercel settings.");
       return;
     }
 
     setLoading(true);
-    setResponse("Synthesizing...");
+    setResponse("Connecting to Satellite...");
 
     try {
-      // Direct API URL for Gemini 1.5 Flash
+      // 2. Direct API call to Google's servers
       const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${API_KEY}`;
 
       const res = await fetch(url, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          contents: [{ parts: [{ text: "Give me a 5-word creative vision statement." }] }]
+          contents: [{ parts: [{ text: "Write a 5-word futuristic vision statement for a tech company." }] }]
         })
       });
 
       const data = await res.json();
       
-      if (data.error) {
-        throw new Error(data.error.message);
-      }
+      if (data.error) throw new Error(data.error.message);
 
       const aiText = data.candidates[0].content.parts[0].text;
       setResponse(aiText);
     } catch (err) {
-      setResponse("Error: " + err.message);
+      setResponse("Connection Error: " + err.message);
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center p-6 bg-slate-950">
-      <div className="max-w-sm w-full p-8 border border-blue-500/30 rounded-3xl bg-black shadow-2xl">
-        <h1 className="text-2xl font-black text-blue-400 tracking-tighter mb-4">OMNI-X</h1>
+    <div className="min-h-screen flex items-center justify-center bg-black p-4">
+      <div className="w-full max-w-sm p-8 rounded-3xl border border-blue-500/20 bg-slate-900/50 backdrop-blur-md">
+        <h1 className="text-3xl font-black text-blue-500 tracking-tighter mb-6">OMNI-X</h1>
         
-        <div className="bg-slate-900/50 p-6 rounded-xl mb-6 min-h-[100px] flex items-center justify-center border border-white/5">
-          <p className="text-sm font-mono text-blue-100 italic leading-relaxed text-center">
+        <div className="mb-6 p-4 bg-black/50 rounded-xl border border-white/5 min-h-[100px] flex items-center justify-center">
+          <p className="text-sm text-blue-100 font-mono text-center leading-relaxed">
             {response}
           </p>
         </div>
@@ -59,10 +59,10 @@ function App() {
           onClick={runAI}
           disabled={loading}
           className={`w-full py-4 rounded-2xl font-bold transition-all ${
-            loading ? 'bg-blue-900 text-blue-300' : 'bg-blue-600 hover:bg-blue-500 text-white'
+            loading ? 'bg-blue-900 text-blue-400 opacity-50' : 'bg-blue-600 hover:bg-blue-500 text-white active:scale-95'
           }`}
         >
-          {loading ? "PROCESSING..." : "GENERATE VISION"}
+          {loading ? "INITIALIZING..." : "GENERATE VISION"}
         </button>
       </div>
     </div>
