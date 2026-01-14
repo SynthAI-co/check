@@ -1,74 +1,73 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { createRoot } from 'react-dom/client';
-import * as GoogleAI from '@google/genai';
 
-// 1. Bulletproof API Key detection
-// This checks both Vite-style and standard global-style definitions
-const API_KEY = (typeof import.meta !== 'undefined' && import.meta.env?.VITE_GEMINI_API_KEY) 
-                 || window._env_?.VITE_GEMINI_API_KEY 
-                 || ""; 
-
-// 2. Initialize the AI
-const genAI = new GoogleAI.GoogleGenerativeAI(API_KEY);
+// Use the key you set in Vercel
+const API_KEY = import.meta.env?.VITE_GEMINI_API_KEY || "";
 
 function App() {
-  const [status, setStatus] = React.useState("System Ready");
+  const [response, setResponse] = useState("System Standby");
+  const [loading, setLoading] = useState(false);
 
-  // Simple test to see if the API Key is actually working
-  const testConnection = async () => {
+  const runAI = async () => {
     if (!API_KEY) {
-      setStatus("Error: No API Key found in Vercel settings!");
+      setResponse("Error: No API Key found in Vercel settings.");
       return;
     }
-    
+
+    setLoading(true);
+    setResponse("Synthesizing...");
+
     try {
-      setStatus("Connecting to Gemini...");
-      const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
-      const result = await model.generateContent("Hello!");
-      const response = await result.response;
-      setStatus("Connection Successful: " + response.text().substring(0, 20) + "...");
+      // Direct API URL for Gemini 1.5 Flash
+      const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${API_KEY}`;
+
+      const res = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          contents: [{ parts: [{ text: "Give me a 5-word creative vision statement." }] }]
+        })
+      });
+
+      const data = await res.json();
+      
+      if (data.error) {
+        throw new Error(data.error.message);
+      }
+
+      const aiText = data.candidates[0].content.parts[0].text;
+      setResponse(aiText);
     } catch (err) {
-      setStatus("Connection Failed: " + err.message);
+      setResponse("Error: " + err.message);
+    } finally {
+      setLoading(false);
     }
   };
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen text-white bg-black p-4 font-sans">
-      <div className="w-full max-w-md p-8 border border-blue-500/30 rounded-2xl bg-slate-900/50 backdrop-blur-xl shadow-[0_0_30px_rgba(59,130,246,0.2)]">
-        <h1 className="text-4xl font-black tracking-tighter text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-purple-500 mb-2">
-          OMNI-X
-        </h1>
-        <div className="h-1 w-20 bg-blue-500 mb-6"></div>
+    <div className="min-h-screen flex flex-col items-center justify-center p-6 bg-slate-950">
+      <div className="max-w-sm w-full p-8 border border-blue-500/30 rounded-3xl bg-black shadow-2xl">
+        <h1 className="text-2xl font-black text-blue-400 tracking-tighter mb-4">OMNI-X</h1>
         
-        <p className="text-gray-400 text-sm mb-8 leading-relaxed">
-          AI-driven creative direction initialized. The system is ready for vision synthesis.
-        </p>
-
-        <div className="space-y-4">
-          <div className="p-4 bg-black/40 border border-white/5 rounded-lg">
-            <p className="text-[10px] uppercase tracking-widest text-blue-400 mb-1">Status</p>
-            <p className="text-sm font-mono">{status}</p>
-          </div>
-
-          <button 
-            onClick={testConnection}
-            className="w-full py-3 px-6 bg-blue-600 hover:bg-blue-500 transition-colors rounded-xl font-bold text-sm shadow-lg shadow-blue-900/20"
-          >
-            Test AI Connection
-          </button>
+        <div className="bg-slate-900/50 p-6 rounded-xl mb-6 min-h-[100px] flex items-center justify-center border border-white/5">
+          <p className="text-sm font-mono text-blue-100 italic leading-relaxed text-center">
+            {response}
+          </p>
         </div>
+
+        <button 
+          onClick={runAI}
+          disabled={loading}
+          className={`w-full py-4 rounded-2xl font-bold transition-all ${
+            loading ? 'bg-blue-900 text-blue-300' : 'bg-blue-600 hover:bg-blue-500 text-white'
+          }`}
+        >
+          {loading ? "PROCESSING..." : "GENERATE VISION"}
+        </button>
       </div>
-      
-      <footer className="mt-8 opacity-30 text-[10px] uppercase tracking-[0.3em]">
-        © 2026 OMNI-X TERMINAL
-      </footer>
     </div>
   );
 }
 
-// 3. Render the App
-const rootElement = document.getElementById('root');
-if (rootElement) {
-  const root = createRoot(rootElement);
-  root.render(<App />);
-}
+const root = createRoot(document.getElementById('root'));
+root.render(<App />);
