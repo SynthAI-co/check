@@ -1,4 +1,12 @@
- import React from 'react';
+// Remove this:
+// import { GoogleGenerativeAI } from '@google/genai';
+
+// Replace with this:
+import * as GoogleAI from '@google/genai';
+
+// Then, inside your code where you need the key:
+const genAI = new GoogleAI.GoogleGenerativeAI(API_KEY);
+import React from 'react';
 import { createRoot } from 'react-dom/client';
 import { GoogleGenerativeAI } from '@google/genai'; // Correct class name
 
